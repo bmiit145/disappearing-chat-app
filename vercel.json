@@ -1,23 +1,9 @@
 {
-    "version": 2,
-    "builds": [
-      {
-        "src": "./index.js",
-        "use": "@vercel/node"
-      }
-    ],
-    "routes": [
-      {
-        "src": "/(.*)",
-        "dest": "/index.js"
-      }
-    ],
-    "rewrites": [
-      { "source": "/socket.io/(.*)", "destination": "http://localhost:3000/socket.io/$1" },
-      { "source": "/(.*)", "destination": "/" }
-    ],
-    "headers": [
-      { "source": "/socket.io/(.*)", "headers": [{"key": "Access-Control-Allow-Origin", "value": "*"}] }
-    ]
-  }
-  
+  "rewrites": [
+    { "source": "/socket.io/(.*)", "destination": "http://localhost:3000/socket.io/$1" },
+    { "source": "/(.*)", "destination": "/" }
+  ],
+  "headers": [
+    { "source": "/socket.io/(.*)", "headers": [{"key": "Access-Control-Allow-Origin", "value": "*"}] }
+  ]
+}
