@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Disappearing Chat App</title>
+  <!-- Include Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://cdn.socket.io/socket.io-4.1.2.min.js"></script>
+</head>
+
+<body>
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header">Chat Room</div>
+          <div class="card-body" id="chatMessages"></div>
+          <div class="card-footer">
+            <input type="text" class="form-control" id="messageInput" placeholder="Enter your message">
+            <button class="btn btn-primary mt-2" id="sendButton">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Include jQuery and Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script>
+
+    const socket = io('http://localhost:3000');
+    const ws = new WebSocket('ws://localhost:3000/chat');
+    const messageInput = $('#messageInput');
+    const sendButton = $('#sendButton');
+    const chatMessages = $('#chatMessages');
+
+    ws.addEventListener('message', (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'delete') {
+        // Remove the message from the DOM
+        chatMessages.find(`[data-message="${data.message}"]`).remove();
+      } else {
+        const messageDiv = $(`<div class="alert alert-primary mt-2">${data}</div>`);
+        messageDiv.attr('data-message', data);
+        chatMessages.append(messageDiv);
+
+        // Schedule the message to be deleted after 2 minutes
+        setTimeout(() => {
+          ws.send(JSON.stringify({ type: 'delete', message: data }));
+          messageDiv.remove();
+        }, 2 * 60 * 1000); // 2 minutes in milliseconds
+      }
+    });
+
+    sendButton.click(() => {
+      const message = messageInput.val();
+      if (message) {
+        ws.send(message);
+        messageInput.val('');
+      }
+    });
+  </script>
+</body>
+
+</html>

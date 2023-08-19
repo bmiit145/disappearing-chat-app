@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Disappearing Chat App</title>
+  <!-- Include Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header">Chat Room</div>
+          <div class="card-footer">
+              <input type="text" class="form-control" id="messageInput" placeholder="Enter your message">
+              <button class="btn btn-primary mt-2" id="sendButton">Send</button>
+            </div>
+            <div class="card-body" id="chatMessages"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Include jQuery and Socket.IO CDN -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.socket.io/4.1.2/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    $(document).ready(() => {
+      const messageInput = $('#messageInput');
+      const sendButton = $('#sendButton');
+      const chatMessages = $('#chatMessages');
+
+      socket.on('message', (message) => {
+        const messageDiv = $('<div class="alert alert-primary mt-2"></div>');
+        messageDiv.text(message);
+        chatMessages.append(messageDiv);
+      });
+
+      socket.on('deleteMessage', (message) => {
+        const messageDiv = chatMessages.find(`.alert:contains("${message}")`);
+        if (messageDiv.length) {
+          messageDiv.remove();
+        }
+      });
+
+      sendButton.click(() => {
+        const message = messageInput.val();
+        if (message) {
+          socket.emit('message', message);
+          messageInput.val('');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
