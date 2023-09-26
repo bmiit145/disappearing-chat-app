@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,53 +7,34 @@
   <!-- Include Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
-
 <body>
-  <!-- <input id="message" placeholder="Message" />
-  <button onclick="sendMessage()">Send</button> -->
-
   <div class="container mt-5">
     <div class="row">
       <div class="col-md-8">
         <div class="card">
           <div class="card-header">Chat Room</div>
           <div class="card-footer">
-            <input type="text" class="form-control" id="messageInput" placeholder="Enter your message">
-            <button class="btn btn-primary mt-2" id="sendButton" onclick="sendMessage()">Send</button>
-          </div>
-          <div class="card-body" id="chatMessages"></div>
+              <input type="text" class="form-control" id="messageInput" placeholder="Enter your message">
+              <button class="btn btn-primary mt-2" id="sendButton">Send</button>
+            </div>
+            <div class="card-body" id="chatMessages"></div>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="/socket.io/socket.io.js"></script>
+  <!-- Include jQuery and Socket.IO CDN -->
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-
+  <script src="https://cdn.socket.io/4.1.2/socket.io.js"></script>
   <script>
     const socket = io();
 
-    function sendMessage() {
-      const message = $('#messageInput').val();
-
-      // Send a message to all users with the same token
-      socket.emit('message', message);
-    }
-
-    socket.on('connect', () => {
-      const userToken = prompt('Enter your unique token:');
-      socket.emit('login', userToken);
-    });
-
     $(document).ready(() => {
-
       const messageInput = $('#messageInput');
       const sendButton = $('#sendButton');
       const chatMessages = $('#chatMessages');
 
-      socket.on('message', ({ senderId, message }) => {
-        // Display messages received from other users with the same token
-        console.log(`[Message from ${senderId}]: ${message}`);
+      socket.on('message', (message) => {
         const messageDiv = $('<div class="alert alert-primary mt-2"></div>');
         messageDiv.text(message);
         chatMessages.append(messageDiv);
@@ -67,8 +47,14 @@
         }
       });
 
+      sendButton.click(() => {
+        const message = messageInput.val();
+        if (message) {
+          socket.emit('message', message);
+          messageInput.val('');
+        }
+      });
     });
   </script>
 </body>
-
 </html>

@@ -1,35 +1,64 @@
 const express = require('express');
 const http = require('http');
-const socketIO = require('socket.io');
+const socketIo = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server);
+const io = socketIo(server);
 
-const PORT = process.env.PORT || 3000;
+// Serve static files from the 'public' directory
+app.use(express.static('public'));
 
-app.use(express.static(__dirname + '/public'));
-
-const messages = [];
+// Store connected socket clients
+const clientsByToken = new Map();
 
 io.on('connection', (socket) => {
-  socket.on('message', (message) => {
-    messages.push({ content: message, timestamp: Date.now() });
+  socket.on('login', (userToken) => {
+    // Create or get a list for users with the same token
+    if (!clientsByToken.has(userToken)) {
+      clientsByToken.set(userToken, []);
+    }
 
-    // Broadcast the received message to all connected clients
-    io.emit('message', message);
+    // Add the socket to the list
+    clientsByToken.get(userToken).push(socket);
 
-    // Schedule the message to be deleted after 2 minutes
-    setTimeout(() => {
-      const index = messages.findIndex((msg) => msg.content === message);
-      if (index !== -1) {
-        messages.splice(index, 1);
-        io.emit('deleteMessage', message);
+    socket.on('message', (message) => {
+      const senderId = socket.id;
+
+      // Broadcast the message to all users with the same token
+      const userSockets = clientsByToken.get(userToken);
+      for (const userSocket of userSockets) {
+        userSocket.emit('message', { senderId, message });
+
+
+        // Schedule the message to be deleted after 4  seconds
+        setTimeout(() => {
+            userSocket.emit('deleteMessage', message);
+        }, 4 * 1000);
+        
       }
-    }, 4 * 1000); // 2 minutes in milliseconds
+    });
+
+    socket.on('disconnect', () => {
+      // Remove the socket from the list when disconnected
+      const userSockets = clientsByToken.get(userToken);
+      if (userSockets) {
+        const index = userSockets.indexOf(socket);
+        if (index !== -1) {
+          userSockets.splice(index, 1);
+
+          // Remove the list if there are no sockets left
+          if (userSockets.length === 0) {
+            clientsByToken.delete(userToken);
+          }
+        }
+      }
+    });
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+const port = process.env.PORT || 3000;
+
+server.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
